@@ -1,0 +1,145 @@
+---
+title: "AC - Análise Exploratória"
+author: "Altanízio; Vanessa"
+date: "05/05/2020"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    number_sections: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", out.width="100%",python = reticulate::eng_python)
+
+options(scipen=999,OutDec= ".")
+library(rlang)
+library(sf)
+library(raster)
+library(dplyr)
+library(spData)
+library(osmdata)
+library(tmap)   
+library(leaflet)
+library(mapview)
+library(ggplot2) 
+library(shiny) 
+library(mapdeck)
+library(tidyr)
+library(readxl)
+library(GISTools)
+library(rgdal)
+library(knitr)
+library(kableExtra)
+library(dplyr)
+library(summarytools)
+library(heatmaply)
+library(ggcorrplot)
+library(ggplot2)
+library(plotly)
+library(reshape)
+library(Hmisc)
+library(corrr)
+library(tidyverse)
+library(reticulate)
+use_python("/usr/local/bin/python")
+```
+
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=TRUE}
+base <- read_excel("../base12.xlsx")
+```
+
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=TRUE}
+
+
+library("Hmisc")
+df = as.data.frame(base) %>% select(-N_ZONA)
+df_DENSIDADE = as.data.frame(base) %>% select(N_ZONA,POP_TOT_km2:EPS_km2)
+df_DIVERSIDADE = as.data.frame(base) %>% select(N_ZONA,ENTROPIA_TIMBO:ENTROPIA_SEFIN)
+df_DESTINOS = as.data.frame(base) %>% select(N_ZONA,escolas_e_km2:shopp)
+df_DISTANCIA_AO_TRANSPORTE = as.data.frame(base) %>% select(N_ZONA,PARADADEON_km2:cap_onb_pop)
+df_DESENHO = as.data.frame(base) %>% select(N_ZONA,ext_c_ext:passeio_km2)
+df_Atropelamentos= as.data.frame(base) %>% select(N_ZONA,ATR_TOTAL_KM2:ATR_TXA_FG_NTE)
+
+
+
+
+library(corrplot)
+library(ggcorrplot)
+# Compute a correlation matrix
+
+
+
+
+```
+
+# Gráficos
+
+## HISTOGRAMA {.tabset .tabset-dropdown}
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.width="100%", rows.print=20}
+library(ggplot2)
+gg0 <- list()
+
+for(i in 1:ncol(df)){
+breaks <- pretty(range(df[[colnames(df)[i]]]), n = nclass.FD(df[[colnames(df)[i]]]), min.n = 1)
+bwidth <- breaks[2]-breaks[1]
+gg0[[i]] <- ggplot(df, aes(df[[colnames(df)[i]]])) + geom_histogram(fill=I("white"),colour="black",alpha=I(.3),binwidth=bwidth, aes(y = ..density..)) + 
+  geom_density(aes(colour = "Densidade")) + 
+  stat_function(fun = dnorm, args = list(mean = mean(df[[colnames(df)[i]]]), sd = sd(df[[colnames(df)[i]]])), aes(colour = "Dist.Normal"),size = 0.5) + 
+  scale_colour_manual("Legenda", values = c("red","blue"))+
+  theme(legend.position = c(0.9, 0.9)) + scale_y_continuous(name  = 'Densidade')
+}
+
+headings <- colnames(df)
+
+```
+
+### 
+
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
+for (i in 1:length(gg0)) {
+  cat("###",headings[i],"\n")
+  print(gg0[[i]] + scale_x_continuous(name  = headings[i]))
+  pvalue = shapiro.test(df[[colnames(df)[i]]])$p.value
+  normal = ifelse(pvalue>0.05,'Possui distribuição normal','Não possui distribuição normal' )
+  print(paste('Shapiro Test (p-valor): ' ,round(pvalue,2)))
+  print(normal)
+  cat('\n\n')
+}
+```
+
+
+
+## BOXPLOT {.tabset .tabset-dropdown}
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.width="100%", rows.print=20}
+library(ggplot2)
+gg0 <- list()
+
+for(i in 1:ncol(df)){
+gg0[[i]] <- ggplot(df, aes(y = df[[colnames(df)[i]]])) + geom_boxplot()
+}
+
+headings <- colnames(df)
+
+```
+
+### 
+
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
+for (i in 1:length(gg0)) {
+  cat("###",headings[i],"\n")
+  print(gg0[[i]] + scale_y_continuous(name  = headings[i]))
+  cat('\n\n')
+}
+```
+
+

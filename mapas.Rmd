@@ -1,0 +1,87 @@
+---
+title: "AC - Análise Exploratória"
+author: "Altanízio; Vanessa"
+date: "05/05/2020"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    number_sections: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", out.width="100%",python = reticulate::eng_python)
+
+options(scipen=999,OutDec= ".")
+library(rlang)
+library(sf)
+library(raster)
+library(dplyr)
+library(spData)
+library(osmdata)
+library(tmap)   
+library(leaflet)
+library(mapview)
+library(ggplot2) 
+library(shiny) 
+library(mapdeck)
+library(tidyr)
+library(readxl)
+library(GISTools)
+library(rgdal)
+library(knitr)
+library(kableExtra)
+library(dplyr)
+library(summarytools)
+library(heatmaply)
+library(ggcorrplot)
+library(ggplot2)
+library(plotly)
+library(reshape)
+library(Hmisc)
+library(corrr)
+library(tidyverse)
+library(reticulate)
+use_python("/usr/local/bin/python")
+```
+
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=TRUE}
+df = st_read(dsn = '../base12.geojson')  %>% st_transform(32724)
+```
+
+# Mapas
+
+## MAPAS {.tabset .tabset-dropdown}
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.width="100%", rows.print=20}
+library(ggplot2)
+gg0 <- list()
+
+for(i in 2:(ncol(df)-1)){
+
+gg0[[i-1]] <- tm_shape(df)  + tm_polygons(col = colnames(df)[i],alpha = 1,palette = 'Blues')  + tm_borders() + 
+  tm_compass(type = "arrow", position = c("left", "top"),text.size = 0.5) +
+  tm_scale_bar(breaks = c(0, 1, 2, 3), position = c("left", "bottom"), text.size = 0.5)
+
+}
+
+headings <- colnames(df)
+
+```
+
+### 
+
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
+for (i in 2:(ncol(df)-1)) {
+  cat("###",headings[i],"\n")
+  print(gg0[[i-1]])
+  cat('\n\n')
+}
+```
+
+

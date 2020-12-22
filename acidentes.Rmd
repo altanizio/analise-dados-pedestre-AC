@@ -1,0 +1,334 @@
+---
+title: "AC - Análise Exploratória"
+author: "Altanízio; Vanessa"
+date: "05/05/2020"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    number_sections: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+      
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", out.width="100%")
+
+options(scipen=999,OutDec= ".")
+library(sf)
+library(raster)
+library(dplyr)
+library(spData)
+library(osmdata)
+library(tmap)   
+library(leaflet)
+library(mapview)
+library(ggplot2) 
+library(shiny) 
+library(mapdeck)
+library(tidyr)
+library(readxl)
+library(GISTools)
+library(rgdal)
+library(knitr)
+library(kableExtra)
+library(dplyr)
+library(summarytools)
+library(plotly)
+library(ggplot2)
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=TRUE}
+ZT = st_read(dsn = 'ZT.geojson') %>% st_transform(4269)
+ACC_2015 = st_read(dsn = 'acidentes/GEO_SIAT_2015.shp') %>% st_transform(4269)
+ACC_2015 = ACC_2015 %>% filter(NATUREZA == 'Atropelamento')
+
+ACC_2016 = st_read(dsn = 'acidentes/GEO_SIAT_2016.shp') %>% st_transform(4269)
+ACC_2016 = ACC_2016 %>% filter(NATUREZA == 'Atropelamento')
+ 
+ACC_2017 = st_read(dsn = 'acidentes/GEO_SIAT_2017.shp') %>% st_transform(4269)
+ACC_2017 = ACC_2017 %>% filter(NATUREZA == 'Atropelamento')
+
+ACC_2018 = st_read(dsn = 'acidentes/SIAT_2018.shp') %>% st_transform(4269)
+ACC_2018 = ACC_2018 %>% filter(NATUREZA == 'Atropelamento')
+
+ZT_acc = ZT %>% dplyr::select(N_ZONA)
+
+ZT_acc$atropelamentos_totais_2015 = lengths(st_intersects(ZT_acc, ACC_2015))
+ZT_acc$atropelamentos_totais_2016 = lengths(st_intersects(ZT_acc, ACC_2016))
+ZT_acc$atropelamentos_totais_2017 = lengths(st_intersects(ZT_acc, ACC_2017))
+ZT_acc$atropelamentos_totais_2018 = lengths(st_intersects(ZT_acc, ACC_2018))
+
+ACC_2015 = ACC_2015 %>% filter(MORTOS > 0)
+ACC_2016 = ACC_2016 %>% filter(MORTOS > 0)
+ACC_2017 = ACC_2017 %>% filter(MORTOS > 0)
+ACC_2018 = ACC_2018 %>% filter(MORTOS > 0)
+
+
+ZT_acc$atropelamentos_fatais_2015 = lengths(st_intersects(ZT_acc, ACC_2015))
+ZT_acc$atropelamentos_fatais_2016 = lengths(st_intersects(ZT_acc, ACC_2016))
+ZT_acc$atropelamentos_fatais_2017 = lengths(st_intersects(ZT_acc, ACC_2017))
+ZT_acc$atropelamentos_fatais_2018 = lengths(st_intersects(ZT_acc, ACC_2018))
+
+
+
+
+
+```
+
+# Atropelamentos Totais
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%", rows.print=5}
+
+Atropelamentos = ZT_acc %>% dplyr::select(N_ZONA,atropelamentos_totais_2015,atropelamentos_totais_2016,
+                                        atropelamentos_totais_2017,atropelamentos_totais_2018)%>% arrange(desc(atropelamentos_totais_2018))
+
+as.data.frame(Atropelamentos)%>% dplyr::select(-geometry)%>% kable(format = "html", escape = F, format.args = list(format='f',decimal.mark = ',', big.mark = '.'), digits=2,booktabs = TRUE,
+             caption = "Dados") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), font_size = 12,fixed_thead = T) %>%
+  scroll_box(width = "100%", height = "250px")
+
+st_options(plain.ascii = FALSE)
+#print(dfSummary(densidade, style = 'grid',graph.magnif = 0.9),method = "render")
+
+descr(Atropelamentos%>% dplyr::select(-N_ZONA))%>% kable(format = "html", escape = F, format.args = list(format='f',decimal.mark = ',', big.mark = '.'), digits=2,booktabs = TRUE,
+             caption = "Descrição estatística") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), font_size = 12,fixed_thead = T) %>%
+  scroll_box(width = "100%", height = "450px")
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
+
+
+fig1 = Atropelamentos %>% plot_ly() %>% add_histogram(~atropelamentos_totais_2015, name = "Histograma")%>%
+  layout(xaxis = list(title = 'atropelamentos_totais_2015'), yaxis = list(title = 'Observações'))
+
+fig2 = Atropelamentos %>% plot_ly() %>% add_boxplot(y =~atropelamentos_totais_2015, name = "Boxplot") %>%
+  layout(xaxis = list(title = ''), yaxis = list(title = 'atropelamentos_totais_2015'))
+
+subplot(fig1,fig2, shareY = FALSE, titleX = TRUE,titleY = TRUE) %>% layout(title ="atropelamentos_totais_2015",showlegend = FALSE)
+
+
+
+fig1 = Atropelamentos %>% plot_ly() %>% add_histogram(~atropelamentos_totais_2016, name = "Histograma")%>%
+  layout(xaxis = list(title = 'atropelamentos_totais_2016'), yaxis = list(title = 'Observações'))
+
+fig2 = Atropelamentos %>% plot_ly() %>% add_boxplot(y =~atropelamentos_totais_2016, name = "Boxplot") %>%
+  layout(xaxis = list(title = ''), yaxis = list(title = 'atropelamentos_totais_2016'))
+
+subplot(fig1,fig2, shareY = FALSE, titleX = TRUE,titleY = TRUE) %>% layout(title ="atropelamentos_totais_2016",showlegend = FALSE)
+
+
+
+
+fig1 = Atropelamentos %>% plot_ly() %>% add_histogram(~atropelamentos_totais_2017, name = "Histograma")%>%
+  layout(xaxis = list(title = 'atropelamentos_totais_2017'), yaxis = list(title = 'Observações'))
+
+fig2 = Atropelamentos %>% plot_ly() %>% add_boxplot(y =~atropelamentos_totais_2017, name = "Boxplot") %>%
+  layout(xaxis = list(title = ''), yaxis = list(title = 'atropelamentos_totais_2017'))
+
+subplot(fig1,fig2, shareY = FALSE, titleX = TRUE,titleY = TRUE) %>% layout(title ="atropelamentos_totais_2017",showlegend = FALSE)
+
+
+fig1 = Atropelamentos %>% plot_ly() %>% add_histogram(~atropelamentos_totais_2018, name = "Histograma")%>%
+  layout(xaxis = list(title = 'atropelamentos_totais_2018'), yaxis = list(title = 'Observações'))
+
+fig2 = Atropelamentos %>% plot_ly() %>% add_boxplot(y =~atropelamentos_totais_2017, name = "Boxplot") %>%
+  layout(xaxis = list(title = ''), yaxis = list(title = 'atropelamentos_totais_2018'))
+
+subplot(fig1,fig2, shareY = FALSE, titleX = TRUE,titleY = TRUE) %>% layout(title ="atropelamentos_totais_2018",showlegend = FALSE)
+
+
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
+tmap_mode("view")
+map_ZT = tm_shape(Atropelamentos)  + tm_polygons(col = c('atropelamentos_totais_2015','atropelamentos_totais_2016','atropelamentos_totais_2017',"atropelamentos_totais_2018"), n = 7,alpha = 0.7,palette = 'Blues')  + tm_borders() + 
+    tm_facets(sync = TRUE, ncol = 2)
+map_ZT + tm_basemap(server = "OpenStreetMap.Mapnik")
+
+""
+```
+
+# Atropelamentos Fatais
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%", rows.print=5}
+
+Atropelamentos = ZT_acc %>% dplyr::select(N_ZONA,atropelamentos_fatais_2015,atropelamentos_fatais_2016,
+                                        atropelamentos_fatais_2017,atropelamentos_fatais_2018)%>% arrange(desc(atropelamentos_fatais_2018))
+
+as.data.frame(Atropelamentos)%>% dplyr::select(-geometry)%>% kable(format = "html", escape = F, format.args = list(format='f',decimal.mark = ',', big.mark = '.'), digits=2,booktabs = TRUE,
+             caption = "Dados") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), font_size = 12,fixed_thead = T) %>%
+  scroll_box(width = "100%", height = "250px")
+
+st_options(plain.ascii = FALSE)
+#print(dfSummary(densidade, style = 'grid',graph.magnif = 0.9),method = "render")
+
+descr(Atropelamentos%>% dplyr::select(-N_ZONA))%>% kable(format = "html", escape = F, format.args = list(format='f',decimal.mark = ',', big.mark = '.'), digits=2,booktabs = TRUE,
+             caption = "Descrição estatística") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), font_size = 12,fixed_thead = T) %>%
+  scroll_box(width = "100%", height = "450px")
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
+
+
+fig1 = Atropelamentos %>% plot_ly() %>% add_histogram(~atropelamentos_fatais_2015, name = "Histograma")%>%
+  layout(xaxis = list(title = 'atropelamentos_fatais_2015'), yaxis = list(title = 'Observações'))
+
+fig2 = Atropelamentos %>% plot_ly() %>% add_boxplot(y =~atropelamentos_fatais_2015, name = "Boxplot") %>%
+  layout(xaxis = list(title = ''), yaxis = list(title = 'atropelamentos_fatais_2015'))
+
+subplot(fig1,fig2, shareY = FALSE, titleX = TRUE,titleY = TRUE) %>% layout(title ="atropelamentos_fatais_2015",showlegend = FALSE)
+
+
+
+fig1 = Atropelamentos %>% plot_ly() %>% add_histogram(~atropelamentos_fatais_2016, name = "Histograma")%>%
+  layout(xaxis = list(title = 'atropelamentos_fatais_2016'), yaxis = list(title = 'Observações'))
+
+fig2 = Atropelamentos %>% plot_ly() %>% add_boxplot(y =~atropelamentos_fatais_2016, name = "Boxplot") %>%
+  layout(xaxis = list(title = ''), yaxis = list(title = 'atropelamentos_fatais_2016'))
+
+subplot(fig1,fig2, shareY = FALSE, titleX = TRUE,titleY = TRUE) %>% layout(title ="atropelamentos_fatais_2016",showlegend = FALSE)
+
+
+
+
+fig1 = Atropelamentos %>% plot_ly() %>% add_histogram(~atropelamentos_fatais_2017, name = "Histograma")%>%
+  layout(xaxis = list(title = 'atropelamentos_fatais_2017'), yaxis = list(title = 'Observações'))
+
+fig2 = Atropelamentos %>% plot_ly() %>% add_boxplot(y =~atropelamentos_fatais_2017, name = "Boxplot") %>%
+  layout(xaxis = list(title = ''), yaxis = list(title = 'atropelamentos_fatais_2017'))
+
+subplot(fig1,fig2, shareY = FALSE, titleX = TRUE,titleY = TRUE) %>% layout(title ="atropelamentos_fatais_2017",showlegend = FALSE)
+
+
+fig1 = Atropelamentos %>% plot_ly() %>% add_histogram(~atropelamentos_fatais_2018, name = "Histograma")%>%
+  layout(xaxis = list(title = 'atropelamentos_fatais_2018'), yaxis = list(title = 'Observações'))
+
+fig2 = Atropelamentos %>% plot_ly() %>% add_boxplot(y =~atropelamentos_fatais_2017, name = "Boxplot") %>%
+  layout(xaxis = list(title = ''), yaxis = list(title = 'atropelamentos_fatais_2018'))
+
+subplot(fig1,fig2, shareY = FALSE, titleX = TRUE,titleY = TRUE) %>% layout(title ="atropelamentos_fatais_2018",showlegend = FALSE)
+
+
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
+tmap_mode("view")
+map_ZT = tm_shape(Atropelamentos)  + tm_polygons(col = c('atropelamentos_fatais_2015','atropelamentos_fatais_2016','atropelamentos_fatais_2017',"atropelamentos_fatais_2018"), n = 7,alpha = 0.7,palette = 'Blues')  + tm_borders() + 
+    tm_facets(sync = TRUE, ncol = 2)
+map_ZT + tm_basemap(server = "OpenStreetMap.Mapnik")
+
+""
+```
+
+
+# Atropelamentos 2015, 2016 e 2017
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, out.width="100%", rows.print=5}
+
+Atropelamentos = ZT_acc %>% dplyr::select(N_ZONA,atropelamentos_totais_2015,atropelamentos_totais_2016,
+                                        atropelamentos_totais_2017,atropelamentos_totais_2018, atropelamentos_fatais_2015,atropelamentos_fatais_2016,
+                                        atropelamentos_fatais_2017,atropelamentos_fatais_2018) %>% dplyr::mutate(Atropelamentos_totais = atropelamentos_totais_2015 + atropelamentos_totais_2016 +
+                                        atropelamentos_totais_2017, Atropelamentos_fatais = atropelamentos_fatais_2015 + atropelamentos_fatais_2016 + 
+                                        atropelamentos_fatais_2017, Atropelamentos_fatais_prop = ifelse(Atropelamentos_totais == 0, 0, Atropelamentos_fatais / Atropelamentos_totais) )%>% dplyr::select(N_ZONA,Atropelamentos_totais, Atropelamentos_fatais,Atropelamentos_fatais_prop) %>% arrange(desc(Atropelamentos_totais))
+
+as.data.frame(Atropelamentos)%>% dplyr::select(-geometry)%>% kable(format = "html", escape = F, format.args = list(format='f',decimal.mark = ',', big.mark = '.'), digits=2,booktabs = TRUE,
+             caption = "Dados") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), font_size = 12,fixed_thead = T) %>%
+  scroll_box(width = "100%", height = "250px")
+
+st_options(plain.ascii = FALSE)
+#print(dfSummary(densidade, style = 'grid',graph.magnif = 0.9),method = "render")
+
+descr(Atropelamentos%>% dplyr::select(-N_ZONA))%>% kable(format = "html", escape = F, format.args = list(format='f',decimal.mark = ',', big.mark = '.'), digits=2,booktabs = TRUE,
+             caption = "Descrição estatística") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), font_size = 12,fixed_thead = T) %>%
+  scroll_box(width = "100%", height = "450px")
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
+
+
+fig1 = Atropelamentos %>% plot_ly() %>% add_histogram(~Atropelamentos_totais, name = "Histograma", marker = list(color = 'rgba(255,0,0,0.8)'))%>%
+  layout(xaxis = list(title = 'Atropelamentos_totais'), yaxis = list(title = 'Observações'))
+
+fig2 = Atropelamentos %>% plot_ly() %>% add_boxplot(y =~Atropelamentos_totais, name = "Boxplot") %>%
+  layout(xaxis = list(title = ''), yaxis = list(title = 'Atropelamentos_totais'))
+
+subplot(fig1,fig2, shareY = FALSE, titleX = TRUE,titleY = TRUE) %>% layout(title ="Atropelamentos_totais",showlegend = FALSE)
+
+
+
+fig1 = Atropelamentos %>% plot_ly() %>% add_histogram(~Atropelamentos_fatais, name = "Histograma", marker = list(color = 'rgba(255,0,0,0.8)'))%>%
+  layout(xaxis = list(title = 'Atropelamentos_fatais'), yaxis = list(title = 'Observações'))
+
+fig2 = Atropelamentos %>% plot_ly() %>% add_boxplot(y =~Atropelamentos_fatais, name = "Boxplot") %>%
+  layout(xaxis = list(title = ''), yaxis = list(title = 'Atropelamentos_fatais'))
+
+subplot(fig1,fig2, shareY = FALSE, titleX = TRUE,titleY = TRUE) %>% layout(title ="Atropelamentos_fatais",showlegend = FALSE)
+
+
+
+
+fig1 = Atropelamentos %>% plot_ly() %>% add_histogram(~Atropelamentos_fatais_prop, name = "Histograma", marker = list(color = 'rgba(255,0,0,0.8)'))%>%
+  layout(xaxis = list(title = 'Atropelamentos_fatais_prop'), yaxis = list(title = 'Observações'))
+
+fig2 = Atropelamentos %>% plot_ly() %>% add_boxplot(y =~Atropelamentos_fatais_prop, name = "Boxplot") %>%
+  layout(xaxis = list(title = ''), yaxis = list(title = 'Atropelamentos_fatais_prop'))
+
+subplot(fig1,fig2, shareY = FALSE, titleX = TRUE,titleY = TRUE) %>% layout(title ="Atropelamentos_fatais_prop",showlegend = FALSE)
+
+
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
+tmap_mode("view")
+map_ZT = tm_shape(Atropelamentos)  + tm_polygons(col =c('Atropelamentos_totais','Atropelamentos_fatais',"Atropelamentos_fatais_prop"),alpha = 0.7,palette = 'Reds')  + tm_borders() + 
+    tm_facets(sync = TRUE, ncol = 2)
+map_ZT + tm_basemap(server = "OpenStreetMap.Mapnik")
+
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, out.width="100%"}
+library(fitdistrplus)
+library(vcd)
+library(MASS)
+
+
+base = Atropelamentos %>% filter(Atropelamentos_totais>0)
+base = base$Atropelamentos_totais
+
+descdist(base, boot = 500, discrete = T)
+descdist(base, boot = 500, discrete = F)
+
+gf = goodfit(base,type= "nbinomial",method= "ML")
+summary(gf)
+
+
+fw  <- fitdist(base, "weibull")
+fg  <- fitdist(base, "gamma")
+fln <- fitdist(base, "lnorm")
+summary(fw)
+summary(fg)
+summary(fln)
+
+par(mfrow = c(2, 2))
+plot.legend <- c("Weibull", "lognormal", "gamma")
+denscomp(list(fw, fln, fg), legendtext = plot.legend)
+qqcomp(list(fw, fln, fg), legendtext = plot.legend)
+cdfcomp(list(fw, fln, fg), legendtext = plot.legend)
+ppcomp(list(fw, fln, fg), legendtext = plot.legend)
+
+
+```
+
