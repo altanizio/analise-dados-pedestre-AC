@@ -62,12 +62,22 @@ df = st_read(dsn = '../base12.geojson')  %>% st_transform(32724)
 library(ggplot2)
 gg0 <- list()
 
-for(i in 2:(ncol(df)-1)){
-
-gg0[[i-1]] <- tm_shape(df)  + tm_polygons(col = colnames(df)[i],alpha = 1,palette = 'Blues')  + tm_borders() + 
-  tm_compass(type = "arrow", position = c("left", "top"),text.size = 0.5) +
-  tm_scale_bar(breaks = c(0, 1, 2, 3), position = c("left", "bottom"), text.size = 0.5)
-
+for (i in 2:(ncol(df) - 1)) {
+  gg0[[i - 1]] <-
+    tm_shape(df)  + tm_polygons(col = colnames(df)[i],
+                                alpha = 1,
+                                palette = 'Blues')  + tm_borders() +
+    tm_compass(
+      type = "arrow",
+      position = c("left", "top"),
+      text.size = 0.5
+    ) +
+    tm_scale_bar(
+      breaks = c(0, 1, 2, 3),
+      position = c("left", "bottom"),
+      text.size = 0.5
+    )
+  
 }
 
 headings <- colnames(df)
@@ -77,9 +87,9 @@ headings <- colnames(df)
 ### 
 
 ```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
-for (i in 2:(ncol(df)-1)) {
-  cat("###",headings[i],"\n")
-  print(gg0[[i-1]])
+for (i in 2:(ncol(df) - 1)) {
+  cat("###", headings[i], "\n")
+  print(gg0[[i - 1]])
   cat('\n\n')
 }
 ```
